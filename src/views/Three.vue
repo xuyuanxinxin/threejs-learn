@@ -73,7 +73,8 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { Mesh, MeshPhongMaterial } from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment";
+import { Mesh, MeshPhongMaterial, Vector3 } from "three";
 export default {
   mounted: function () {
     this.init();
@@ -90,8 +91,8 @@ export default {
       //     this.carModel.rotation.x += 0.01;
       //     this.carModel.rotation.y += 0.01;
       //   }
-      this.camera.position.set(this.xValue, this.yValue, this.zValue);
-      this.camera.lookAt(new THREE.Vector3(this.lookX, this.lookY, this.lookZ));
+      // this.camera.position.set(this.xValue, this.yValue, this.zValue);
+      // this.camera.lookAt(new THREE.Vector3(this.lookX, this.lookY, this.lookZ));
       this.controls.update();
       this.render.render(this.scene, this.camera);
       this.frame = requestAnimationFrame(this.draw);
@@ -102,11 +103,16 @@ export default {
         canvas: document.getElementById("mainCanvas"),
         antialias: true,
       });
-      this.render.setSize(1500, 1200);
+      this.render.setSize(window.innerWidth, window.innerHeight);
       this.render.setClearColor(0x000000);
     },
     createScene() {
       this.scene = new THREE.Scene();
+      const pmremGenerator = new THREE.PMREMGenerator(this.render);
+      this.scene.background = new THREE.Color(0xeeeeee);
+      this.scene.environment = pmremGenerator.fromScene(
+        new RoomEnvironment()
+      ).texture;
     },
 
     createCamera() {
@@ -117,17 +123,38 @@ export default {
       // this.camera.position.set(4, -3, 5);
       // this.camera.position.set(0, 0, 5);
       this.camera.position.set(this.xValue, this.yValue, this.zValue);
+      this.camera.lookAt(new Vector3(0, 0, 0));
       // this.camera.lookAt(new THREE.Vector3(this.lookX, this.lookY, this.lookZ));
       this.scene.add(this.camera);
       this.controls = new OrbitControls(this.camera, this.render.domElement);
       this.controls.update();
+      this.controls.enablePan = false;
+      this.controls.enableZoom = true;
+      this.controls.enableDamping = true;
     },
 
+    addCursor() {},
     createLight() {
-      // let light = new THREE.PointLight(0xffffff, 1, 100);
+      let pointLight = new THREE.PointLight(0xffffff, 1, 100);
+      pointLight.position.set(5, 10, -8);
       let light = new THREE.DirectionalLight();
-      light.position.set(10, 15, 5);
+      light.position.set(5, 30, 5);
+
+      let pointLight2 = new THREE.PointLight(0xffffff, 1, 100);
+      pointLight2.position.set(5, 8, 8);
+      const sun = new Mesh(
+        new THREE.SphereGeometry(3),
+        new THREE.MeshMatcapMaterial({
+          color: 0xffff00,
+          shininess: 1,
+        })
+      );
+      sun.position.set(5, 10, -8);
+      // sun.position.set(5, 5, 3);
+      this.scene.add(sun);
       this.scene.add(light);
+      this.scene.add(pointLight);
+      this.scene.add(pointLight2);
     },
 
     createCube() {
@@ -246,7 +273,7 @@ export default {
           //   }
 
           obj.wireframe = false;
-          obj.position.set(10, 3, 0);
+          obj.position.set(0, 0, 0);
           this.carModel = obj;
           this.scene.add(this.carModel);
         });
